@@ -1,0 +1,80 @@
+package com.example.auth.controller;
+
+import com.example.auth.dto.ApiResponse;
+import com.example.auth.dto.PatchUserRequest;
+import com.example.auth.dto.UpdateUserRequest;
+import com.example.auth.dto.UserDto;
+import com.example.auth.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
+        List<UserDto> users = userService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> getUserById(@PathVariable Long id) {
+        UserDto user = userService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", user));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request) {
+        UserDto user = userService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", user));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
+    }
+
+    @PatchMapping("/{id}/disable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> disableUser(@PathVariable Long id) {
+        UserDto user = userService.disableUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User disabled successfully", user));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> getCurrentUser() {
+        UserDto user = userService.getCurrentUser();
+        return ResponseEntity.ok(ApiResponse.success("Current user retrieved successfully", user));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> updateCurrentUser(@Valid @RequestBody UpdateUserRequest request) {
+        UserDto user = userService.updateCurrentUser(request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", user));
+    }
+
+    @PatchMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> patchCurrentUser(@Valid @RequestBody PatchUserRequest request) {
+        UserDto user = userService.patchCurrentUser(request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", user));
+    }
+}
