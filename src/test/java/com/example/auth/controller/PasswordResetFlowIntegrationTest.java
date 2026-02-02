@@ -67,7 +67,6 @@ class PasswordResetFlowIntegrationTest {
 
     @Test
     void completePasswordResetFlow_ShouldSucceed() throws Exception {
-        // Step 1: Request OTP
         ForgotPasswordRequest forgotRequest = new ForgotPasswordRequest("test@example.com");
         
         mockMvc.perform(post("/api/auth/forgot-password")
@@ -76,12 +75,11 @@ class PasswordResetFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Get the OTP from database (in real scenario it would be sent via email)
         PasswordResetOtp otp = otpRepository.findByEmail("test@example.com")
                 .orElseThrow();
         String otpCode = otp.getOtpCode();
 
-        // Step 2: Validate OTP
+
         ValidateOtpRequest validateRequest = new ValidateOtpRequest("test@example.com", otpCode);
         
         mockMvc.perform(post("/api/auth/validate-otp")
@@ -90,7 +88,6 @@ class PasswordResetFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Step 3: Reset Password
         ResetPasswordRequest resetRequest = new ResetPasswordRequest(
                 "test@example.com", otpCode, "newPassword123");
         
@@ -113,7 +110,6 @@ class PasswordResetFlowIntegrationTest {
 
     @Test
     void validateOtp_WithExpiredOtp_ShouldFail() throws Exception {
-        // Create expired OTP
         PasswordResetOtp expiredOtp = PasswordResetOtp.builder()
                 .email(testUser.getEmail())
                 .otpCode("123456")
@@ -132,7 +128,6 @@ class PasswordResetFlowIntegrationTest {
 
     @Test
     void validateOtp_WithAlreadyUsedOtp_ShouldFail() throws Exception {
-        // Create used OTP
         PasswordResetOtp usedOtp = PasswordResetOtp.builder()
                 .email(testUser.getEmail())
                 .otpCode("123456")
@@ -151,7 +146,6 @@ class PasswordResetFlowIntegrationTest {
 
     @Test
     void validateOtp_WithWrongOtpCode_ShouldFail() throws Exception {
-        // Create valid OTP
         PasswordResetOtp validOtp = PasswordResetOtp.builder()
                 .email(testUser.getEmail())
                 .otpCode("123456")
@@ -192,7 +186,6 @@ class PasswordResetFlowIntegrationTest {
 
     @Test
     void resetPassword_WithShortPassword_ShouldFail() throws Exception {
-        // Create valid OTP
         PasswordResetOtp validOtp = PasswordResetOtp.builder()
                 .email(testUser.getEmail())
                 .otpCode("123456")

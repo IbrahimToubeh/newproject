@@ -8,6 +8,7 @@ import com.example.auth.entity.Role;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.UnauthorizedException;
+import com.example.auth.mapper.UserMapper;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,9 @@ class AuthServiceTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -64,7 +68,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("testuser", "password");
         when(userRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(Optional.of(testUser));
         when(authenticationManager.authenticate(any())).thenReturn(null);
-        when(jwtTokenProvider.generateToken(anyString())).thenReturn("jwt-token");
+        when(jwtTokenProvider.generateTokenFromUserId(anyLong())).thenReturn("jwt-token");
 
         AuthResponse response = authService.login(request);
 
@@ -96,7 +100,19 @@ class AuthServiceTest {
         when(userRepository.existsByUsername(anyString())).thenReturn(false);
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(userMapper.toUser(any())).thenReturn(testUser);
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userMapper.toDto(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            return UserDto.builder()
+                    .id(u.getId())
+                    .username(u.getUsername())
+                    .email(u.getEmail())
+                    .role(u.getRole())
+                    .enabled(u.isEnabled())
+                    .createdAt(u.getCreatedAt())
+                    .build();
+        });
 
         UserDto result = authService.register(request);
 

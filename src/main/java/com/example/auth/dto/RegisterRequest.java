@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class RegisterRequest {
     
     @NotBlank(message = "Username is required")
+    @jakarta.validation.constraints.Pattern(regexp = "^[^@]*$", message = "Username cannot contain '@'")
     private String username;
     
     @NotBlank(message = "Email is required")

@@ -1,11 +1,13 @@
 package com.example.auth.security;
 
+import com.example.auth.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -24,31 +26,34 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration-milliseconds:86400000}")
     private long jwtExpiration;
 
-    public String extractUserName(String token) {
+    public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String generateToken(String userName) {
+    public String generateTokenFromUserId(Long userId) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userName);
+        return createToken(claims, String.valueOf(userId));
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        if (token == null || userDetails == null) {
+        if (token == null || token.trim().isEmpty()) {
             return false;
         }
         try {
-            final String userName = extractUserName(token);
-            return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            final String userId = extractUserId(token);
+            if (userDetails instanceof CustomUserDetails) {
+                return (userId.equals(String.valueOf(((CustomUserDetails) userDetails).getId())) && !isTokenExpired(token));
+            }
+            return !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
     }
 
-    private String createToken(Map<String, Object> claims, String userName) {
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userName)
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
@@ -74,7 +79,6 @@ public class JwtTokenProvider {
     }
 
     private Claims extractAllClaims(String token) {
-
         return Jwts.parserBuilder()
                 .setSigningKey(getKey())
                 .build()

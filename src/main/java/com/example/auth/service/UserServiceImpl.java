@@ -6,6 +6,7 @@ import com.example.auth.dto.UserDto;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.ResourceNotFoundException;
+import com.example.auth.mapper.UserMapper;
 import com.example.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -22,12 +23,13 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::convertToDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -36,7 +38,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-        return convertToDto(user);
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User updatedUser = userRepository.save(user);
-        return convertToDto(updatedUser);
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
@@ -78,7 +80,17 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setEnabled(false);
         User updatedUser = userRepository.save(user);
-        return convertToDto(updatedUser);
+        return userMapper.toDto(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserDto enableUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        user.setEnabled(true);
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
@@ -87,7 +99,7 @@ public class UserServiceImpl implements UserService {
         String username = getCurrentUsername();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
-        return convertToDto(user);
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -112,7 +124,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User updatedUser = userRepository.save(currentUser);
-        return convertToDto(updatedUser);
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
@@ -137,7 +149,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User updatedUser = userRepository.save(currentUser);
-        return convertToDto(updatedUser);
+        return userMapper.toDto(updatedUser);
     }
 
     private String getCurrentUsername() {
@@ -148,14 +160,5 @@ public class UserServiceImpl implements UserService {
         return authentication.getName();
     }
 
-    private UserDto convertToDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .enabled(user.isEnabled())
-                .createdAt(user.getCreatedAt())
-                .build();
-    }
+
 }

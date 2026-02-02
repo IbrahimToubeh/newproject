@@ -28,6 +28,9 @@ class UserServiceEdgeCaseTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.example.auth.mapper.UserMapper userMapper;
+
     @InjectMocks
     private UserServiceImpl userService;
 

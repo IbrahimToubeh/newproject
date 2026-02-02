@@ -60,11 +60,10 @@ class UserControllerIntegrationTest {
         adminUser = createTestUser("admin", "admin@example.com", "password123", Role.ADMIN, true);
         otherUser = createTestUser("otheruser", "other@example.com", "password123", Role.USER, true);
 
-        // Flush to ensure users are persisted before generating tokens
         entityManager.flush();
 
-        userToken = jwtTokenProvider.generateToken(testUser.getUsername());
-        adminToken = jwtTokenProvider.generateToken(adminUser.getUsername());
+        userToken = jwtTokenProvider.generateTokenFromUserId(testUser.getId());
+        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId());
     }
 
     @Test
@@ -180,15 +179,14 @@ class UserControllerIntegrationTest {
 
     @Test
     void debugAdminToken() {
-        // Debug test to verify admin user and token
         System.out.println("=== DEBUG INFO ===");
         System.out.println("Admin Username: " + adminUser.getUsername());
         System.out.println("Admin Role: " + adminUser.getRole());
         System.out.println("Admin Enabled: " + adminUser.isEnabled());
         System.out.println("Admin Token: " + adminToken);
         
-        String extractedUsername = jwtTokenProvider.extractUserName(adminToken);
-        System.out.println("Extracted Username from Token: " + extractedUsername);
+        String extractedUserId = jwtTokenProvider.extractUserId(adminToken);
+        System.out.println("Extracted UserId from Token: " + extractedUserId);
         System.out.println("==================");
     }
 

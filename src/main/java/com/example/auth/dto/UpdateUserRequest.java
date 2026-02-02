@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateUserRequest {
     
+    @jakarta.validation.constraints.Pattern(regexp = "^[^@]*$", message = "Username cannot contain '@'")
     private String username;
     
     @Email(message = "Email must be valid")

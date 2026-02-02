@@ -13,6 +13,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -45,13 +46,11 @@ class JwtAuthenticationFilterTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
-        userDetails = User.builder()
-                .username("testuser")
-                .password("password")
-                .authorities(Collections.emptyList())
-                .build();
+        // Ensure the mocked user is enabled, otherwise validation fails immediately
+        userDetails = new CustomUserDetails(123L, "testuser", "test@example.com", "password", Collections.emptyList(), true);
     }
 
     @Test
@@ -59,15 +58,15 @@ class JwtAuthenticationFilterTest {
         String token = "valid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        when(jwtTokenProvider.extractUserName(token)).thenReturn("testuser");
-        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(userDetails);
+        when(jwtTokenProvider.extractUserId(token)).thenReturn("123");
+        when(userDetailsService.loadUserById(123L)).thenReturn(userDetails);
         when(jwtTokenProvider.validateToken(token, userDetails)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtTokenProvider).extractUserName(token);
-        verify(userDetailsService).loadUserByUsername("testuser");
+        verify(jwtTokenProvider).extractUserId(token);
+        verify(userDetailsService).loadUserById(123L);
     }
 
     @Test
@@ -75,7 +74,7 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtTokenProvider, never()).extractUserName(anyString());
+        verify(jwtTokenProvider, never()).extractUserId(anyString());
     }
 
     @Test
@@ -85,7 +84,7 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtTokenProvider, never()).extractUserName(anyString());
+        verify(jwtTokenProvider, never()).extractUserId(anyString());
     }
 
     @Test
@@ -95,7 +94,7 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(jwtTokenProvider, never()).extractUserName(anyString());
+        verify(jwtTokenProvider, never()).extractUserId(anyString());
     }
 
     @Test
@@ -103,13 +102,14 @@ class JwtAuthenticationFilterTest {
         String token = "invalid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        when(jwtTokenProvider.extractUserName(token)).thenReturn("testuser");
-        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(userDetails);
+        when(jwtTokenProvider.extractUserId(token)).thenReturn("123");
+        when(userDetailsService.loadUserById(123L)).thenReturn(userDetails);
         when(jwtTokenProvider.validateToken(eq(token), any())).thenReturn(false);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+        // validateToken might not be called if extraction throws exception, but here we mocked extraction to succeed
         verify(jwtTokenProvider).validateToken(eq(token), any());
     }
 
@@ -118,7 +118,7 @@ class JwtAuthenticationFilterTest {
         String token = "expired.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        when(jwtTokenProvider.extractUserName(token)).thenThrow(new RuntimeException("Token expired"));
+        when(jwtTokenProvider.extractUserId(token)).thenThrow(new RuntimeException("Token expired"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
@@ -126,28 +126,51 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void doFilterInternal_WithNullUsername_ShouldContinueWithoutAuthentication() throws ServletException, IOException {
+    void doFilterInternal_WithNullUserId_ShouldContinueWithoutAuthentication() throws ServletException, IOException {
         String token = "valid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        when(jwtTokenProvider.extractUserName(token)).thenReturn(null);
+        when(jwtTokenProvider.extractUserId(token)).thenReturn(null);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(userDetailsService, never()).loadUserById(anyLong());
+    }
+
+
+    @Test
+    void doFilterInternal_WithExistingAuthentication_ShouldSkipAuthentication() throws ServletException, IOException {
+        String token = "valid.jwt.token";
+        request.addHeader("Authorization", "Bearer " + token);
+
+        // Simulate existing authentication
+        when(jwtTokenProvider.extractUserId(token)).thenReturn("123");
+        SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("user", "pass", Collections.emptyList())
+        );
+
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        verify(userDetailsService, never()).loadUserById(anyLong());
     }
 
     @Test
-    void doFilterInternal_WithEmptyUsername_ShouldContinueWithoutAuthentication() throws ServletException, IOException {
+    void doFilterInternal_WithDisabledUser_ShouldNotAuthenticate() throws ServletException, IOException {
         String token = "valid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        when(jwtTokenProvider.extractUserName(token)).thenReturn("");
+        // Disabled user
+        UserDetails disabledUser = new CustomUserDetails(123L, "testuser", "test@example.com", "password", Collections.emptyList(), false);
+
+        when(jwtTokenProvider.extractUserId(token)).thenReturn("123");
+        when(userDetailsService.loadUserById(123L)).thenReturn(disabledUser);
+        when(jwtTokenProvider.validateToken(token, disabledUser)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }

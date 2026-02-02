@@ -7,6 +7,7 @@ import com.example.auth.entity.PasswordResetOtp;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.ResourceNotFoundException;
+import com.example.auth.mapper.OtpMapper;
 import com.example.auth.repository.OtpRepository;
 import com.example.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class OtpServiceImpl implements OtpService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final OtpMapper otpMapper;
 
     @Override
     @Transactional
@@ -37,12 +39,7 @@ public class OtpServiceImpl implements OtpService {
         String otpCode = generateOtp();
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
 
-        PasswordResetOtp otp = PasswordResetOtp.builder()
-                .email(request.getEmail())
-                .otpCode(otpCode)
-                .expiresAt(expiresAt)
-                .used(false)
-                .build();
+        PasswordResetOtp otp = otpMapper.createPasswordResetOtp(request.getEmail(), otpCode, expiresAt);
 
         otpRepository.save(otp);
         emailService.sendOtp(request.getEmail(), otpCode);
@@ -57,7 +54,6 @@ public class OtpServiceImpl implements OtpService {
             throw new BadRequestException("OTP has expired");
         }
         
-        // OTP is valid, but don't mark as used (only for validation)
     }
 
     @Override

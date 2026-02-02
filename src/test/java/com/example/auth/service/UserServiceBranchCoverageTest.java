@@ -27,6 +27,9 @@ class UserServiceBranchCoverageTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.example.auth.mapper.UserMapper userMapper;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -44,7 +47,6 @@ class UserServiceBranchCoverageTest {
                 .build();
     }
 
-    // Tests for updateUser with same values (no change needed)
     @Test
     void updateUser_WithSameUsername_ShouldNotCheckDuplicates() {
         UpdateUserRequest request = new UpdateUserRequest("testuser", "new@example.com");
@@ -108,7 +110,6 @@ class UserServiceBranchCoverageTest {
         verify(userRepository, never()).existsByUsername(anyString());
     }
 
-    // Tests for updateCurrentUser with same values
     @Test
     void updateCurrentUser_WithSameUsername_ShouldNotCheckDuplicates() {
         mockSecurityContext("testuser");
@@ -135,7 +136,6 @@ class UserServiceBranchCoverageTest {
         verify(userRepository, never()).existsByEmail(anyString());
     }
 
-    // Tests for patchCurrentUser with same values
     @Test
     void patchCurrentUser_WithSameUsername_ShouldNotCheckDuplicates() {
         mockSecurityContext("testuser");
@@ -191,5 +191,29 @@ class UserServiceBranchCoverageTest {
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
+    }
+
+    @Test
+    void disableUser_WhenUserAlreadyDisabled_ShouldStillReturnDisabled() {
+        testUser.setEnabled(false);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        userService.disableUser(1L);
+
+        assertFalse(testUser.isEnabled());
+        verify(userRepository).save(testUser);
+    }
+    
+    @Test
+    void enableUser_WhenUserAlreadyEnabled_ShouldStillReturnEnabled() {
+        testUser.setEnabled(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        userService.enableUser(1L);
+
+        assertTrue(testUser.isEnabled());
+        verify(userRepository).save(testUser);
     }
 }

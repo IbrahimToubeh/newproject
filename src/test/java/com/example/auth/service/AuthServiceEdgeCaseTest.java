@@ -37,6 +37,9 @@ class AuthServiceEdgeCaseTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private com.example.auth.mapper.UserMapper userMapper;
+
     @InjectMocks
     private AuthServiceImpl authService;
 

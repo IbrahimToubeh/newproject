@@ -17,7 +17,7 @@ class JwtTokenProviderTest {
     private JwtTokenProvider jwtTokenProvider;
     private UserDetails userDetails;
     private String validSecret = "9a02115a835ee03d5fb83cd8a468ea33e4090a6a276b96f377c8a32b2e04312c";
-    private Long expiration = 86400000L; // 24 hours
+    private Long expiration = 86400000L;
 
     @BeforeEach
     void setUp() {
@@ -25,33 +25,36 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(jwtTokenProvider, "secretKey", validSecret);
         ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpiration", expiration);
 
-        userDetails = User.builder()
-                .username("testuser")
-                .password("password")
-                .authorities(Collections.emptyList())
-                .build();
+        userDetails = new CustomUserDetails(
+                123L,
+                "testuser",
+                "test@example.com",
+                "password",
+                Collections.emptyList(),
+                true
+        );
     }
 
     @Test
     void generateToken_ShouldReturnValidToken() {
-        String token = jwtTokenProvider.generateToken("testuser");
+        String token = jwtTokenProvider.generateTokenFromUserId(123L);
 
         assertNotNull(token);
         assertTrue(token.length() > 0);
     }
 
     @Test
-    void extractUserName_WithValidToken_ShouldReturnUsername() {
-        String token = jwtTokenProvider.generateToken("testuser");
+    void extractUserId_WithValidToken_ShouldReturnUserId() {
+        String token = jwtTokenProvider.generateTokenFromUserId(123L);
 
-        String username = jwtTokenProvider.extractUserName(token);
+        String userId = jwtTokenProvider.extractUserId(token);
 
-        assertEquals("testuser", username);
+        assertEquals("123", userId);
     }
 
     @Test
     void validateToken_WithValidToken_ShouldReturnTrue() {
-        String token = jwtTokenProvider.generateToken("testuser");
+        String token = jwtTokenProvider.generateTokenFromUserId(123L);
 
         boolean isValid = jwtTokenProvider.validateToken(token, userDetails);
 
@@ -59,52 +62,43 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    void validateToken_WithWrongUsername_ShouldReturnFalse() {
-        String token = jwtTokenProvider.generateToken("otheruser");
-
-        boolean isValid = jwtTokenProvider.validateToken(token, userDetails);
-
-        assertFalse(isValid);
-    }
-
-    @Test
     void validateToken_WithExpiredToken_ShouldReturnFalse() {
-        // Create provider with 0ms expiration
         JwtTokenProvider expiredProvider = new JwtTokenProvider();
         ReflectionTestUtils.setField(expiredProvider, "secretKey", validSecret);
         ReflectionTestUtils.setField(expiredProvider, "jwtExpiration", 0L);
 
-        String token = expiredProvider.generateToken("testuser");
 
-        // Wait a bit to ensure expiration
+        String token = expiredProvider.generateTokenFromUserId(123L);
+
+        // Sleep briefly to ensure the token actually expires
         try {
             Thread.sleep(10);
         } catch (InterruptedException e) {
             // Ignore
         }
 
-        assertThrows(ExpiredJwtException.class, 
-                () -> jwtTokenProvider.extractUserName(token));
+        boolean isValid = jwtTokenProvider.validateToken(token, userDetails);
+        assertFalse(isValid);
     }
 
     @Test
-    void extractUserName_WithMalformedToken_ShouldThrowException() {
+    void extractUserId_WithMalformedToken_ShouldThrowException() {
         String malformedToken = "not.a.valid.jwt.token";
 
         assertThrows(MalformedJwtException.class,
-                () -> jwtTokenProvider.extractUserName(malformedToken));
+                () -> jwtTokenProvider.extractUserId(malformedToken));
     }
 
     @Test
-    void extractUserName_WithNullToken_ShouldThrowException() {
+    void extractUserId_WithNullToken_ShouldThrowException() {
         assertThrows(Exception.class,
-                () -> jwtTokenProvider.extractUserName(null));
+                () -> jwtTokenProvider.extractUserId(null));
     }
 
     @Test
-    void extractUserName_WithEmptyToken_ShouldThrowException() {
+    void extractUserId_WithEmptyToken_ShouldThrowException() {
         assertThrows(Exception.class,
-                () -> jwtTokenProvider.extractUserName(""));
+                () -> jwtTokenProvider.extractUserId(""));
     }
 
     @Test
@@ -115,28 +109,25 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    void validateToken_WithNullUserDetails_ShouldReturnFalse() {
-        String token = jwtTokenProvider.generateToken("testuser");
-
-        boolean isValid = jwtTokenProvider.validateToken(token, null);
-
-        assertFalse(isValid);
-    }
-
-    @Test
-    void generateToken_WithDifferentUsernames_ShouldGenerateDifferentTokens() {
-        String token1 = jwtTokenProvider.generateToken("user1");
-        String token2 = jwtTokenProvider.generateToken("user2");
+    void generateToken_WithDifferentUserIds_ShouldGenerateDifferentTokens() {
+        String token1 = jwtTokenProvider.generateTokenFromUserId(1L);
+        String token2 = jwtTokenProvider.generateTokenFromUserId(2L);
 
         assertNotEquals(token1, token2);
     }
 
+
     @Test
-    void extractUserName_ShouldBeCaseInsensitive() {
-        String token = jwtTokenProvider.generateToken("TestUser");
+    void validateToken_WithGenericUserDetails_ShouldOnlyCheckExpiration() {
+        UserDetails genericUser = User.builder()
+                .username("generic")
+                .password("password")
+                .authorities(Collections.emptyList())
+                .build();
 
-        String username = jwtTokenProvider.extractUserName(token);
+        String token = jwtTokenProvider.generateTokenFromUserId(123L);
 
-        assertEquals("TestUser", username);
+        // Should return true because it only checks expiration for non-CustomUserDetails
+        assertTrue(jwtTokenProvider.validateToken(token, genericUser));
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,13 +51,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Public authentication endpoints
-                        .requestMatchers("/api/users/register", "/api/auth/login", 
+                        .requestMatchers("/api/users/register", "/api/auth/login",
                                        "/api/auth/forgot-password", "/api/auth/validate-otp", "/api/auth/reset-password").permitAll()
-                        // Swagger/OpenAPI endpoints
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", 
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                        "/swagger-ui.html", "/swagger-resources/**", 
                                        "/webjars/**").permitAll()
                         .anyRequest().authenticated()

@@ -8,6 +8,7 @@ import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.ResourceNotFoundException;
 import com.example.auth.repository.OtpRepository;
+import com.example.auth.mapper.OtpMapper;
 import com.example.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class OtpServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private OtpMapper otpMapper;
+
     @InjectMocks
     private OtpServiceImpl otpService;
 
@@ -70,6 +74,7 @@ class OtpServiceTest {
     void requestPasswordReset_WithValidEmail_ShouldGenerateAndSendOtp() {
         ForgotPasswordRequest request = new ForgotPasswordRequest("test@example.com");
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(otpMapper.createPasswordResetOtp(anyString(), anyString(), any(LocalDateTime.class))).thenReturn(testOtp);
         when(otpRepository.save(any(PasswordResetOtp.class))).thenReturn(testOtp);
 
         otpService.requestPasswordReset(request);

@@ -7,6 +7,7 @@ import com.example.auth.entity.Role;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.ResourceNotFoundException;
+import com.example.auth.mapper.UserMapper;
 import com.example.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserMapper userMapper;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -57,6 +61,19 @@ class UserServiceTest {
                 .role(Role.ADMIN)
                 .enabled(true)
                 .build();
+        
+        // Lenient stubbing to avoid checking strict stubbing warnings in every test
+        lenient().when(userMapper.toDto(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            return UserDto.builder()
+                    .id(u.getId())
+                    .username(u.getUsername())
+                    .email(u.getEmail())
+                    .role(u.getRole())
+                    .enabled(u.isEnabled())
+                    .createdAt(u.getCreatedAt())
+                    .build();
+        });
     }
 
     @Test

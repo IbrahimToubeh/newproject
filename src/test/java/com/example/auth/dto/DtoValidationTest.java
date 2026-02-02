@@ -21,7 +21,6 @@ class DtoValidationTest {
         validator = factory.getValidator();
     }
 
-    // RegisterRequest Tests
     @Test
     void registerRequest_WithValidData_ShouldPass() {
         RegisterRequest request = new RegisterRequest("username", "test@example.com", "password123");
@@ -50,7 +49,6 @@ class DtoValidationTest {
         assertFalse(violations.isEmpty());
     }
 
-    // LoginRequest Tests
     @Test
     void loginRequest_WithValidData_ShouldPass() {
         LoginRequest request = new LoginRequest("username", "password123");
@@ -72,7 +70,6 @@ class DtoValidationTest {
         assertFalse(violations.isEmpty());
     }
 
-    // UpdateUserRequest Tests
     @Test
     void updateUserRequest_WithValidData_ShouldPass() {
         UpdateUserRequest request = new UpdateUserRequest("newusername", "newemail@example.com");
@@ -87,7 +84,6 @@ class DtoValidationTest {
         assertFalse(violations.isEmpty());
     }
 
-    // ForgotPasswordRequest Tests
     @Test
     void forgotPasswordRequest_WithValidEmail_ShouldPass() {
         ForgotPasswordRequest request = new ForgotPasswordRequest("test@example.com");
@@ -102,7 +98,6 @@ class DtoValidationTest {
         assertFalse(violations.isEmpty());
     }
 
-    // ResetPasswordRequest Tests
     @Test
     void resetPasswordRequest_WithValidData_ShouldPass() {
         ResetPasswordRequest request = new ResetPasswordRequest("test@example.com", "123456", "newPassword123");
@@ -124,7 +119,6 @@ class DtoValidationTest {
         assertFalse(violations.isEmpty());
     }
 
-    // ValidateOtpRequest Tests
     @Test
     void validateOtpRequest_WithValidData_ShouldPass() {
         ValidateOtpRequest request = new ValidateOtpRequest("test@example.com", "123456");

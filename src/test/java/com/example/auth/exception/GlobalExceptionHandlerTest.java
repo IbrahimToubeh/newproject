@@ -43,7 +43,6 @@ class GlobalExceptionHandlerTest {
     void setUp() {
         userRepository.deleteAll();
 
-        // Create admin user for authenticated requests
         User adminUser = User.builder()
                 .username("admin")
                 .email("admin@example.com")
@@ -53,12 +52,11 @@ class GlobalExceptionHandlerTest {
                 .build();
         userRepository.save(adminUser);
 
-        adminToken = jwtTokenProvider.generateToken("admin");
+        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId());
     }
 
     @Test
     void handleResourceNotFoundException_ShouldReturn404() throws Exception {
-        // Try to get a non-existent user by ID
         mockMvc.perform(get("/api/users/99999")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
@@ -68,7 +66,6 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleValidationException_ShouldReturn400() throws Exception {
-        // Registration with invalid email format
         String invalidRequest = "{\"username\":\"test\",\"email\":\"invalid-email\",\"password\":\"password123\"}";
         
         mockMvc.perform(post("/api/users/register")
@@ -80,7 +77,6 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleValidationException_ShortPassword_ShouldReturn400() throws Exception {
-        // Registration with password too short
         String invalidRequest = "{\"username\":\"test\",\"email\":\"test@example.com\",\"password\":\"123\"}";
         
         mockMvc.perform(post("/api/users/register")
@@ -92,7 +88,6 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleValidationException_BlankUsername_ShouldReturn400() throws Exception {
-        // Registration with blank username
         String invalidRequest = "{\"username\":\"\",\"email\":\"test@example.com\",\"password\":\"password123\"}";
         
         mockMvc.perform(post("/api/users/register")
@@ -104,7 +99,6 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleAuthenticationException_ShouldReturn401() throws Exception {
-        // Invalid credentials
         String invalidCredentials = "{\"usernameOrEmail\":\"nonexistent\",\"password\":\"wrongpassword\"}";
         
         mockMvc.perform(post("/api/auth/login")
@@ -116,7 +110,6 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleBadRequestException_ShouldReturn400() throws Exception {
-        // Try to reset password with invalid OTP
         String invalidOtp = "{\"email\":\"test@example.com\",\"otpCode\":\"000000\",\"newPassword\":\"newPassword123\"}";
         
         mockMvc.perform(post("/api/auth/reset-password")

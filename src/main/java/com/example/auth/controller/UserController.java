@@ -57,6 +57,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("User disabled successfully", user));
     }
 
+    @PatchMapping("/{id}/enable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserDto>> enableUser(@PathVariable Long id) {
+        UserDto user = userService.enableUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User enabled successfully", user));
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<UserDto>> getCurrentUser() {

@@ -18,6 +18,8 @@ public interface UserService {
     
     UserDto disableUser(Long id);
     
+    UserDto enableUser(Long id);
+    
     UserDto getCurrentUser();
     
     UserDto updateCurrentUser(UpdateUserRequest request);

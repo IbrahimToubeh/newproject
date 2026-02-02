@@ -8,6 +8,7 @@ import com.example.auth.entity.Role;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
 import com.example.auth.exception.UnauthorizedException;
+import com.example.auth.mapper.UserMapper;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -52,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("Invalid username/email or password");
         }
 
-        String token = jwtTokenProvider.generateToken(user.getUsername());
+        String token = jwtTokenProvider.generateTokenFromUserId(user.getId());
         return new AuthResponse(token);
     }
 
@@ -67,23 +69,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Email already exists");
         }
 
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .enabled(true)
-                .build();
+        User user = userMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
 
-        return UserDto.builder()
-                .id(savedUser.getId())
-                .username(savedUser.getUsername())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .enabled(savedUser.isEnabled())
-                .createdAt(savedUser.getCreatedAt())
-                .build();
+        return userMapper.toDto(savedUser);
     }
 }
