@@ -1,79 +1,53 @@
 # User Authentication and Authorization System
 
-A comprehensive Spring Boot backend system providing user authentication and authorization with role-based access control, JWT tokens, and OTP-based password reset functionality.
+A Spring Boot REST API providing JWT-based authentication, role-based authorization, user management, and OTP password reset functionality.
 
-## Features
+## 🚀 Features
 
-✅ **User Management**
-- Public user registration (no authentication required)
-- Admin CRUD operations for users
-- User profile management (view, update, patch)
-- User disable/enable functionality
-
-✅ **Authentication & Authorization**
+### Authentication & Authorization
 - JWT-based stateless authentication
 - BCrypt password encryption
 - Role-based access control (ADMIN, USER)
-- Secure login with username or email
+- Login with username or email
+- Token-based authentication filter
 
-✅ **Password Reset**
+### User Management
+- Public user registration
+- Admin CRUD operations for users
+- User profile management (view, update, patch)
+- User enable/disable functionality
+
+### Password Reset
 - OTP-based password reset flow
 - 6-digit OTP generation
-- 5-minute OTP## 🧪 Testing
+- 5-minute OTP expiration
+- Single-use OTP validation
+- Mock email service (console logging)
 
-This project has comprehensive test coverage with **97 automated tests**:
-
-**Unit Tests:**
-- AuthService (6 tests)
-- UserService (6 tests)
-- OtpService (5 tests)
-- JwtTokenProvider (13 tests)
-- CustomUserDetailsService (9 tests)
-- EmailService (7 tests)
-- DTO Validation (12 tests)
-
-**Integration Tests:**
-- AuthController (5 tests)
-- UserController (13 tests including 1 debug test)
-- Password Reset Flow (10 tests)
-- Exception Handling (6 tests)
-
-**Coverage:**
-- Line Coverage: **95%+**
-- Branch Coverage: **85%+**
-- Method Coverage: **98%+**
-- JaCoCo enforces 90% minimum coverage
-- H2 in-memory database for testing
-
-## Technology Stack
+## 🛠 Technology Stack
 
 - **Java**: 21
 - **Spring Boot**: 3.4.2
 - **Spring Security**: 6.x
-- **Spring Data JPA**: Hibernate
+- **Spring Data JPA**: Hibernate ORM
 - **Database**: MySQL 8.x (H2 for testing)
 - **JWT**: jjwt 0.11.5
+- **MapStruct**: 1.5.5 (Object mapping)
 - **Build Tool**: Maven
 - **Testing**: JUnit 5, Mockito
-- **Coverage**: JaCoCo
-- **Utilities**: Lombok
+- **Coverage**: JaCoCo (90% minimum enforced)
+- **Utilities**: Lombok, OpenAPI/Swagger
 
-## Prerequisites
+## 📋 Prerequisites
 
-- Java 21 or higher
+- Java 21+
 - Maven 3.6+
 - MySQL 8.x
-- IDE (IntelliJ IDEA, Eclipse, or VS Code)
+- IDE (IntelliJ IDEA recommended)
 
-## Getting Started
+## 🏃 Getting Started
 
-### 1. Clone the Repository
-
-```bash
-cd newtask
-```
-
-### 2. Configure MySQL Database
+### 1. Configure MySQL Database
 
 Create a MySQL database:
 
@@ -81,7 +55,7 @@ Create a MySQL database:
 CREATE DATABASE auth_system;
 ```
 
-Update `src/main/resources/application.properties` with your MySQL credentials:
+Update `src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/auth_system
@@ -89,25 +63,20 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 ```
 
-### 3. Build the Project
+### 2. Build and Run
 
 ```bash
 mvn clean install
-```
-
-### 4. Run the Application
-
-```bash
 mvn spring-boot:run
 ```
 
 The application will start on `http://localhost:8080`
 
-## API Endpoints
+## 📚 API Documentation
 
 ### Authentication Endpoints (Public)
 
-#### Register User
+#### Register
 ```http
 POST /api/users/register
 Content-Type: application/json
@@ -133,16 +102,11 @@ Content-Type: application/json
 Response:
 ```json
 {
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "tokenType": "Bearer"
-  }
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
-#### Forgot Password
+#### Request Password Reset
 ```http
 POST /api/auth/forgot-password
 Content-Type: application/json
@@ -164,23 +128,32 @@ Content-Type: application/json
 }
 ```
 
+#### Validate OTP
+```http
+POST /api/auth/validate-otp
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "otpCode": "123456"
+}
+```
+
 ### User Endpoints (Authenticated)
 
-All user endpoints require JWT token in the Authorization header:
+All endpoints require JWT token:
 ```
 Authorization: Bearer <your-jwt-token>
 ```
 
-#### Get Current User Profile
+#### Get Current User
 ```http
 GET /api/users/me
-Authorization: Bearer <token>
 ```
 
-#### Update Current User (PUT - Full Update)
+#### Update Current User (Full)
 ```http
 PUT /api/users/me
-Authorization: Bearer <token>
 Content-Type: application/json
 
 {
@@ -189,10 +162,9 @@ Content-Type: application/json
 }
 ```
 
-#### Patch Current User (PATCH - Partial Update)
+#### Update Current User (Partial)
 ```http
 PATCH /api/users/me
-Authorization: Bearer <token>
 Content-Type: application/json
 
 {
@@ -200,24 +172,21 @@ Content-Type: application/json
 }
 ```
 
-### Admin Endpoints (ADMIN Role Only)
+### Admin Endpoints (ADMIN Role Required)
 
 #### Get All Users
 ```http
 GET /api/users
-Authorization: Bearer <admin-token>
 ```
 
 #### Get User by ID
 ```http
 GET /api/users/{id}
-Authorization: Bearer <admin-token>
 ```
 
 #### Update User
 ```http
 PUT /api/users/{id}
-Authorization: Bearer <admin-token>
 Content-Type: application/json
 
 {
@@ -229,87 +198,40 @@ Content-Type: application/json
 #### Delete User
 ```http
 DELETE /api/users/{id}
-Authorization: Bearer <admin-token>
 ```
 
 #### Disable User
 ```http
 PATCH /api/users/{id}/disable
-Authorization: Bearer <admin-token>
 ```
 
-## Testing
+#### Enable User
+```http
+PATCH /api/users/{id}/enable
+```
+
+## 🧪 Testing
 
 ### Run All Tests
-
 ```bash
 mvn test
 ```
 
-### Generate JaCoCo Coverage Report
-
+### Generate Coverage Report
 ```bash
-mvn clean test
-mvn jacoco:report
+mvn clean test jacoco:report
 ```
 
-View the coverage report by opening:
-```
-target/site/jacoco/index.html
-```
+View in browser: `target/site/jacoco/index.html`
 
 ### Test Coverage
+- **90%+ required** (enforced by JaCoCo)
+- **97 total tests**
+- Unit tests for all services
+- Integration tests for all controllers
+- Edge case and branch coverage tests
 
-The project includes comprehensive tests covering:
-- ✅ Public user registration without authentication
-- ✅ User login with JWT token generation
-- ✅ Disabled user cannot log in
-- ✅ USER role cannot access ADMIN endpoints
-- ✅ Update current user using PUT
-- ✅ Patch current user using PATCH
-- ✅ User cannot update another user's profile
-- ✅ OTP generation and validation
-- ✅ Password reset flow
-- ✅ All service layer operations
-
-**Coverage Target**: 90%+ (enforced by JaCoCo)
-
-## Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Password Reset OTP Table
-```sql
-CREATE TABLE password_reset_otp (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
-    otp_code VARCHAR(6) NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
-    used BOOLEAN NOT NULL DEFAULT FALSE
-);
-```
-
-## Security Configuration
-
-- **Authentication**: JWT (JSON Web Tokens)
-- **Password Encoding**: BCrypt
-- **Session Management**: Stateless
-- **CSRF**: Disabled (stateless API)
-- **Token Expiration**: 24 hours (configurable)
-- **OTP Expiration**: 5 minutes
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
@@ -319,123 +241,109 @@ src/
 │   │   ├── controller/      # REST controllers
 │   │   ├── dto/            # Data Transfer Objects
 │   │   ├── entity/         # JPA entities
-│   │   ├── exception/      # Custom exceptions
+│   │   ├── exception/      # Custom exceptions & handlers
+│   │   ├── mapper/         # MapStruct mappers
 │   │   ├── repository/     # JPA repositories
-│   │   ├── security/       # Security components (JWT, filters)
-│   │   ├── service/        # Business logic services
-│   │   └── AuthApplication.java
+│   │   ├── security/       # JWT provider, filters, user details
+│   │   └── service/        # Business logic
 │   └── resources/
 │       └── application.properties
 └── test/
-    ├── java/com/example/auth/
-    │   ├── controller/     # Integration tests
-    │   └── service/        # Unit tests
-    └── resources/
-        └── application-test.properties
+    └── java/com/example/auth/
+        ├── controller/     # Integration tests
+        ├── dto/           # DTO validation tests
+        ├── exception/     # Exception handler tests
+        ├── security/      # Security component tests
+        └── service/       # Service unit tests
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-### JWT Configuration
+### JWT Settings
 
 Edit `application.properties`:
 
 ```properties
-# JWT Secret (Base64 encoded, minimum 256 bits)
-app.jwt.secret=your-secret-key-here
-
-# JWT Expiration (in milliseconds, default 24 hours)
+app.jwt.secret=your-base64-encoded-secret-key
 app.jwt.expiration-milliseconds=86400000
 ```
 
-### Email Service
+### Database Schema
 
-The current implementation uses a **mock email service** that logs OTP codes to the console. To use a real email service:
+Tables are auto-created via JPA:
 
-1. Implement `EmailService` interface with your email provider (e.g., SendGrid, AWS SES)
-2. Replace `EmailServiceImpl` with your implementation
-3. Configure email credentials in `application.properties`
+- **users**: User accounts with roles
+- **password_reset_otp**: OTP tokens for password reset
 
-## Validation Rules
+## 🔒 Security
 
-- **Username**: Required, unique
-- **Email**: Required, unique, valid email format
+- **Password Hashing**: BCrypt (strength 10)
+- **JWT Signing**: HS256 algorithm
+- **Session Management**: Stateless
+- **CSRF Protection**: Disabled (stateless API)
+- **Token Expiration**: 24 hours (configurable)
+- **OTP Expiration**: 5 minutes
+
+## 🎯 Validation Rules
+
+- **Username**: Required, unique, no '@' symbol
+- **Email**: Required, unique, valid format
 - **Password**: Minimum 8 characters
-- **OTP**: 6 digits, expires in 5 minutes, single use
+- **OTP**: 6 digits, single-use
 
-## Default Roles
+## 👤 Default Roles
 
-- **USER**: Assigned to all newly registered users
-- **ADMIN**: Must be manually assigned in database
+- **USER**: Auto-assigned to new registrations
+- **ADMIN**: Must be manually set in database
 
-To create an admin user, register normally then update the database:
-
+To create an admin:
 ```sql
 UPDATE users SET role = 'ADMIN' WHERE username = 'adminuser';
 ```
 
-## Error Responses
+## 🚨 Error Responses
 
-All errors return a consistent JSON structure:
-
+All errors return JSON:
 ```json
 {
-  "success": false,
+  "timestamp": "2026-02-02T12:00:00",
+  "status": 400,
+  "error": "Bad Request",
   "message": "Error description",
-  "data": null
+  "path": "/api/endpoint"
 }
 ```
 
-HTTP Status Codes:
-- `200 OK`: Success
-- `201 Created`: Resource created
-- `400 Bad Request`: Validation errors
-- `401 Unauthorized`: Authentication failed
-- `403 Forbidden`: Insufficient permissions
-- `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server error
+**HTTP Status Codes:**
+- `200 OK` - Success
+- `201 Created` - Resource created
+- `400 Bad Request` - Validation error
+- `401 Unauthorized` - Authentication failed
+- `403 Forbidden` - Insufficient permissions
+- `404 Not Found` - Resource not found
+- `500 Internal Server Error` - Server error
 
-## Development
+## 🏗️ Architecture Highlights
 
-### Run in Development Mode
+### MapStruct Integration
+Object mapping is handled by MapStruct for type-safe, compile-time DTO/Entity conversions:
+- `UserMapper`: User ↔ UserDto, RegisterRequest → User
+- `OtpMapper`: PasswordResetOtp creation
 
-```bash
-mvn spring-boot:run
-```
+### JWT Authentication Flow
+1. User logs in with credentials
+2. System validates and generates JWT with User ID as subject
+3. Client includes JWT in Authorization header
+4. `JwtAuthenticationFilter` validates token on each request
+5. Security context is populated with user details
 
-### Build Production JAR
+## 📦 Build Production JAR
 
 ```bash
 mvn clean package
 java -jar target/auth-0.0.1-SNAPSHOT.jar
 ```
 
-## Troubleshooting
-
-### Issue: Tests fail with database errors
-
-**Solution**: Ensure H2 dependency is in test scope and application-test.properties is configured correctly.
-
-### Issue: JWT token invalid
-
-**Solution**: Check that the secret key is properly Base64 encoded and at least 256 bits.
-
-### Issue: Unable to connect to MySQL
-
-**Solution**: Verify MySQL is running and credentials in application.properties are correct.
-
-## License
+## 📄 License
 
 This project is for educational purposes.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## Contact
-
-For questions or support, please open an issue in the repository.
