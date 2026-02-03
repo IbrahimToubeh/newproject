@@ -21,13 +21,13 @@ public class LeaveRequest {
     private Long id;
 
     @Column(name = "reporter_id", nullable = false)
-    private Long reporterId;  // Auth Service user who submitted (from DB)
+    private Long reporterId;
 
     @Column(name = "employee_id", nullable = false)
-    private Long employeeId;  // Auth Service user for whom leave is requested (from JWT)
+    private Long employeeId;
 
     @Column(nullable = false)
-    private String email;  // Employee's email
+    private String email;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -47,7 +47,7 @@ public class LeaveRequest {
     private LeaveStatus status = LeaveStatus.PENDING;
 
     @Column(name = "approved_by")
-    private Long approvedBy;  // Admin user id who approved/rejected
+    private Long approvedBy;
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
@@ -63,7 +63,6 @@ public class LeaveRequest {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Helper method to calculate leave days
     public long getLeaveDays() {
         return java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
     }

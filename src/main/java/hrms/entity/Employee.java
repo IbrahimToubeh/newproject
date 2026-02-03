@@ -62,4 +62,6 @@ public class Employee {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    //todo: should there be createdby and modifiedby?
 }
