@@ -1,9 +1,6 @@
 package com.example.auth.controller;
 
-import com.example.auth.dto.ApiResponse;
-import com.example.auth.dto.PatchUserRequest;
-import com.example.auth.dto.UpdateUserRequest;
-import com.example.auth.dto.UserDto;
+import com.example.auth.dto.*;
 import com.example.auth.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +19,11 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserDto>>> getAllUsers() {
-        List<UserDto> users = userService.getAllUsers();
+    public ResponseEntity<ApiResponse<PageResponse<UserDto>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<UserDto> users = userService.getAllUsers(page, size);
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
     }
 

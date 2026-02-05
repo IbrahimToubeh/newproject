@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtTokenProvider {
 
     @Value("${app.jwt.secret:defaultSecretKeyShouldBeVeryLongBecauseOfSignatureAlgorithms}")
@@ -30,8 +32,13 @@ public class JwtTokenProvider {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String generateTokenFromUserId(Long userId) {
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public String generateTokenFromUserId(Long userId, String role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
         return createToken(claims, String.valueOf(userId));
     }
 
@@ -46,6 +53,7 @@ public class JwtTokenProvider {
             }
             return !isTokenExpired(token);
         } catch (Exception e) {
+            log.error("Token validation failed: {}", e.getMessage());
             return false;
         }
     }

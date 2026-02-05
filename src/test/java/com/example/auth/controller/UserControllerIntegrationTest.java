@@ -62,8 +62,8 @@ class UserControllerIntegrationTest {
 
         entityManager.flush();
 
-        userToken = jwtTokenProvider.generateTokenFromUserId(testUser.getId());
-        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId());
+        userToken = jwtTokenProvider.generateTokenFromUserId(testUser.getId(), testUser.getRole().name());
+        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId(), adminUser.getRole().name());
     }
 
     @Test
@@ -187,6 +187,8 @@ class UserControllerIntegrationTest {
         
         String extractedUserId = jwtTokenProvider.extractUserId(adminToken);
         System.out.println("Extracted UserId from Token: " + extractedUserId);
+        String extractedRole = jwtTokenProvider.extractRole(adminToken);
+        System.out.println("Extracted Role from Token: " + extractedRole);
         System.out.println("==================");
     }
 

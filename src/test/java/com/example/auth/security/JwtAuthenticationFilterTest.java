@@ -49,7 +49,6 @@ class JwtAuthenticationFilterTest {
         SecurityContextHolder.clearContext();
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
-        // Ensure the mocked user is enabled, otherwise validation fails immediately
         userDetails = new CustomUserDetails(123L, "testuser", "test@example.com", "password", Collections.emptyList(), true);
     }
 
@@ -109,7 +108,6 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        // validateToken might not be called if extraction throws exception, but here we mocked extraction to succeed
         verify(jwtTokenProvider).validateToken(eq(token), any());
     }
 
@@ -144,7 +142,8 @@ class JwtAuthenticationFilterTest {
         String token = "valid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        // Simulate existing authentication
+        request.addHeader("Authorization", "Bearer " + token);
+
         when(jwtTokenProvider.extractUserId(token)).thenReturn("123");
         SecurityContextHolder.getContext().setAuthentication(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken("user", "pass", Collections.emptyList())
@@ -161,7 +160,8 @@ class JwtAuthenticationFilterTest {
         String token = "valid.jwt.token";
         request.addHeader("Authorization", "Bearer " + token);
 
-        // Disabled user
+        request.addHeader("Authorization", "Bearer " + token);
+
         UserDetails disabledUser = new CustomUserDetails(123L, "testuser", "test@example.com", "password", Collections.emptyList(), false);
 
         when(jwtTokenProvider.extractUserId(token)).thenReturn("123");

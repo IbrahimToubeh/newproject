@@ -68,7 +68,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("testuser", "password");
         when(userRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(Optional.of(testUser));
         when(authenticationManager.authenticate(any())).thenReturn(null);
-        when(jwtTokenProvider.generateTokenFromUserId(anyLong())).thenReturn("jwt-token");
+        when(jwtTokenProvider.generateTokenFromUserId(anyLong(), anyString())).thenReturn("jwt-token");
 
         AuthResponse response = authService.login(request);
 

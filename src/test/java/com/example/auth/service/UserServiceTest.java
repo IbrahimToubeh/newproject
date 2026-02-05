@@ -1,5 +1,6 @@
 package com.example.auth.service;
 
+import com.example.auth.dto.PageResponse;
 import com.example.auth.dto.PatchUserRequest;
 import com.example.auth.dto.UpdateUserRequest;
 import com.example.auth.dto.UserDto;
@@ -15,6 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,7 +67,7 @@ class UserServiceTest {
                 .enabled(true)
                 .build();
         
-        // Lenient stubbing to avoid checking strict stubbing warnings in every test
+
         lenient().when(userMapper.toDto(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             return UserDto.builder()
@@ -78,12 +83,15 @@ class UserServiceTest {
 
     @Test
     void getAllUsers_ShouldReturnAllUsers() {
-        when(userRepository.findAll()).thenReturn(Arrays.asList(testUser, adminUser));
+        List<User> userList = Arrays.asList(testUser, adminUser);
+        Page<User> userPage = new PageImpl<>(userList);
+        
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
 
-        List<UserDto> users = userService.getAllUsers();
+        PageResponse<UserDto> users = userService.getAllUsers(0, 10);
 
-        assertEquals(2, users.size());
-        verify(userRepository).findAll();
+        assertEquals(2, users.getContent().size());
+        verify(userRepository).findAll(any(Pageable.class));
     }
 
     @Test
