@@ -37,7 +37,7 @@ class JwtTokenProviderTest {
 
     @Test
     void generateToken_ShouldReturnValidToken() {
-        String token = jwtTokenProvider.generateTokenFromUserId(123L);
+        String token = jwtTokenProvider.generateTokenFromUserId(123L, "USER");
 
         assertNotNull(token);
         assertTrue(token.length() > 0);
@@ -45,7 +45,7 @@ class JwtTokenProviderTest {
 
     @Test
     void extractUserId_WithValidToken_ShouldReturnUserId() {
-        String token = jwtTokenProvider.generateTokenFromUserId(123L);
+        String token = jwtTokenProvider.generateTokenFromUserId(123L, "USER");
 
         String userId = jwtTokenProvider.extractUserId(token);
 
@@ -53,8 +53,17 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    void extractRole_WithValidToken_ShouldReturnRole() {
+        String token = jwtTokenProvider.generateTokenFromUserId(123L, "ADMIN");
+
+        String role = jwtTokenProvider.extractRole(token);
+
+        assertEquals("ADMIN", role);
+    }
+
+    @Test
     void validateToken_WithValidToken_ShouldReturnTrue() {
-        String token = jwtTokenProvider.generateTokenFromUserId(123L);
+        String token = jwtTokenProvider.generateTokenFromUserId(123L, "USER");
 
         boolean isValid = jwtTokenProvider.validateToken(token, userDetails);
 
@@ -68,13 +77,13 @@ class JwtTokenProviderTest {
         ReflectionTestUtils.setField(expiredProvider, "jwtExpiration", 0L);
 
 
-        String token = expiredProvider.generateTokenFromUserId(123L);
+        String token = expiredProvider.generateTokenFromUserId(123L, "USER");
 
-        // Sleep briefly to ensure the token actually expires
+
         try {
             Thread.sleep(10);
         } catch (InterruptedException e) {
-            // Ignore
+
         }
 
         boolean isValid = jwtTokenProvider.validateToken(token, userDetails);
@@ -110,8 +119,8 @@ class JwtTokenProviderTest {
 
     @Test
     void generateToken_WithDifferentUserIds_ShouldGenerateDifferentTokens() {
-        String token1 = jwtTokenProvider.generateTokenFromUserId(1L);
-        String token2 = jwtTokenProvider.generateTokenFromUserId(2L);
+        String token1 = jwtTokenProvider.generateTokenFromUserId(1L, "USER");
+        String token2 = jwtTokenProvider.generateTokenFromUserId(2L, "ADMIN");
 
         assertNotEquals(token1, token2);
     }
@@ -125,9 +134,9 @@ class JwtTokenProviderTest {
                 .authorities(Collections.emptyList())
                 .build();
 
-        String token = jwtTokenProvider.generateTokenFromUserId(123L);
+        String token = jwtTokenProvider.generateTokenFromUserId(123L, "USER");
 
-        // Should return true because it only checks expiration for non-CustomUserDetails
+
         assertTrue(jwtTokenProvider.validateToken(token, genericUser));
     }
 }

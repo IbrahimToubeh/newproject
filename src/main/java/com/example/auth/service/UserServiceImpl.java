@@ -1,5 +1,6 @@
 package com.example.auth.service;
 
+import com.example.auth.dto.PageResponse;
 import com.example.auth.dto.PatchUserRequest;
 import com.example.auth.dto.UpdateUserRequest;
 import com.example.auth.dto.UserDto;
@@ -9,6 +10,9 @@ import com.example.auth.exception.ResourceNotFoundException;
 import com.example.auth.mapper.UserMapper;
 import com.example.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,10 +31,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDto> getAllUsers() {
-        return userRepository.findAll().stream()
+    public PageResponse<UserDto> getAllUsers(int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        Page<User> users = userRepository.findAll(pageable);
+        List<UserDto> content = users.getContent().stream()
                 .map(userMapper::toDto)
                 .collect(Collectors.toList());
+
+        return PageResponse.<UserDto>builder()
+                .content(content)
+                .pageNo(users.getNumber())
+                .pageSize(users.getSize())
+                .totalElements(users.getTotalElements())
+                .totalPages(users.getTotalPages())
+                .last(users.isLast())
+                .build();
     }
 
     @Override

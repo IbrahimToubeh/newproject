@@ -52,7 +52,7 @@ class GlobalExceptionHandlerTest {
                 .build();
         userRepository.save(adminUser);
 
-        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId());
+        adminToken = jwtTokenProvider.generateTokenFromUserId(adminUser.getId(), adminUser.getRole().name());
     }
 
     @Test

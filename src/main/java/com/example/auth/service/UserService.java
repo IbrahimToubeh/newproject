@@ -1,14 +1,14 @@
 package com.example.auth.service;
 
+import com.example.auth.dto.PageResponse;
 import com.example.auth.dto.PatchUserRequest;
 import com.example.auth.dto.UpdateUserRequest;
 import com.example.auth.dto.UserDto;
-
 import java.util.List;
 
 public interface UserService {
     
-    List<UserDto> getAllUsers();
+    PageResponse<UserDto> getAllUsers(int pageNo, int pageSize);
     
     UserDto getUserById(Long id);
     
