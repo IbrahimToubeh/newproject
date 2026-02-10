@@ -58,6 +58,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Access denied: " + ex.getMessage()));
     }
 
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ApiResponse<Object>> handleExternalServiceException(ExternalServiceException ex) {
+        return ResponseEntity
+                .status(ex.getStatus())
+                .body(ApiResponse.error("External service error: " + ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
         return ResponseEntity

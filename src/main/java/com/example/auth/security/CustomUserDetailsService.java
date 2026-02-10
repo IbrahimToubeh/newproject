@@ -16,6 +16,7 @@ import java.util.Collections;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final com.example.auth.service.RedisService redisService;
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
@@ -25,6 +26,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     public UserDetails loadUserById(Long id) {
+        String status = redisService.getUserStatus(id);
+        if ("DISABLED".equals(status)) {
+            throw new org.springframework.security.authentication.DisabledException("User is disabled");
+        }
+        
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
         return CustomUserDetails.create(user);
