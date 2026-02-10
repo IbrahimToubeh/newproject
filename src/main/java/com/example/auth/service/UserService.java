@@ -25,4 +25,8 @@ public interface UserService {
     UserDto updateCurrentUser(UpdateUserRequest request);
     
     UserDto patchCurrentUser(PatchUserRequest request);
+    
+    void updateUserEmailInternal(Long userId, String email);
+
+    void updateUserStatusInternal(Long userId, boolean enabled);
 }

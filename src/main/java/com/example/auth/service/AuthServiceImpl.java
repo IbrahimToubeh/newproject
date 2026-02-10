@@ -1,9 +1,6 @@
 package com.example.auth.service;
 
-import com.example.auth.dto.AuthResponse;
-import com.example.auth.dto.LoginRequest;
-import com.example.auth.dto.RegisterRequest;
-import com.example.auth.dto.UserDto;
+import com.example.auth.dto.*;
 import com.example.auth.entity.Role;
 import com.example.auth.entity.User;
 import com.example.auth.exception.BadRequestException;
@@ -23,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -30,6 +28,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
+    private final RedisService redisService;
+    private final com.example.auth.client.ApiClient apiClient;
 
     @Override
     @Transactional
@@ -55,6 +55,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = jwtTokenProvider.generateTokenFromUserId(user.getId(), user.getRole().name());
+        
+        // Cache user status
+        redisService.saveUserStatus(user.getId(), "ACTIVE");
+        
         return new AuthResponse(token);
     }
 
@@ -73,6 +77,20 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
+        
+        redisService.saveUserStatus(savedUser.getId(), "ACTIVE");
+
+        try {
+            com.example.auth.dto.InternalEmployeeCreateRequest employeeRequest = new com.example.auth.dto.InternalEmployeeCreateRequest(
+                    savedUser.getId(),
+                    savedUser.getEmail(),
+                    request.getFirstName(),
+                    request.getLastName()
+            );
+            apiClient.post("http://localhost:8081/api/internal/employees", employeeRequest, Void.class);
+        } catch (Exception e) {
+            log.error("Failed to auto-create employee in HRMS for user {}: {}", savedUser.getId(), e.getMessage(), e);
+        }
 
         return userMapper.toDto(savedUser);
     }
